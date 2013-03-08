@@ -39,7 +39,7 @@ __vagrantpossiblevms() {
    # possibly check age so we refesh every so often
       return 0
    else
-   vagrant status | awk '{print $1}'| grep "\." > ${PWD}/.possible.vms
+    for files in `find  ../vcloud-templates/machines/  -type f `; do echo $files | awk -F/ '{print $4 "." $5}' | awk -F. '{print $2 "." $1}'; done > ${PWD}/.possible.vms
    return 0
    fi
 }
