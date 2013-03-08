@@ -63,11 +63,22 @@ __vagrantinvestigate() {
 
 }
 
+__vagrantpossiblevms() {
+   if [[ -f "${PWD}/.possible.vms" ]];then
+   # possibly check age so we refesh every so often
+      return 0
+   else
+   vagrant status | awk '{print $1}'| grep "\." > ${PWD}/.possible.vms
+   return 0
+   fi
+}
+
 _vagrant()
 {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     commands=$(vagrant help | tr -s ' ' | sed -e '1,/Available subcommands/ d' -e '/For help/,$ d' -e '/^\s*$/ d' | cut -f1,2 -d' ' | tr -ds '\n' '[:blank:]')
+    commands="box destroy halt help init package provision reload resume ssh ssh-config status suspend up version"
 
     if [ $COMP_CWORD == 1 ]
     then
@@ -83,7 +94,7 @@ _vagrant()
               COMPREPLY=($(compgen -W "${box_list}" -- ${cur}))
               return 0
             ;;
-            "ssh"|"provision"|"reload"|"halt"|"suspend"|"resume"|"ssh-config"|"up")
+            "ssh"|"provision"|"halt"|"reload"|"destroy"|"suspend"|"resume"|"ssh-config")
               vagrant_state_file=$(__vagrantinvestigate) || return 1
               #Got lazy here.. I'd like to eventually replace this with a pure bash solution.
 	      if [[ -f $vagrant_state_file ]]; then
@@ -93,6 +104,12 @@ _vagrant()
 	      fi
               COMPREPLY=($(compgen -W "${running_vm_list}" -- ${cur}))
               return 0
+            ;;
+            "up"|"status")
+            $(__vagrantpossiblevms) || return 1
+            possible_vm_list=$(cat .possible.vms)
+            COMPREPLY=($(compgen -W "${possible_vm_list}" -- ${cur}))
+            return 0
             ;;
             "box")
               box_commands="add help list remove repackage"
