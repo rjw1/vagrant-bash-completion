@@ -33,10 +33,13 @@ __vagrantinvestigate() {
    return 1
 
 }
-
 __vagrantpossiblevms() {
    if [[ -f "${PWD}/.possible.vms" ]];then
    # possibly check age so we refesh every so often
+   if [ "$(( $(date +"%s") - $(stat -c "%Y" ${PWD}/.possible.vms) ))" -gt "86400" ]; then
+   rm ${PWD}/.possible.vms
+$(__vagrantpossiblevms)
+      fi
       return 0
    else
    vagrant status | awk '{print $1}'| grep "\." > ${PWD}/.possible.vms
